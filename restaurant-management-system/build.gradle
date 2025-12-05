@@ -1,0 +1,100 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+group = 'com.restaurant'
+version = '1.0.0'
+sourceCompatibility = '11'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // MySQL Connector
+    implementation 'mysql:mysql-connector-java:8.0.33'
+    
+    // BCrypt for password hashing
+    implementation 'org.mindrot:jbcrypt:0.4'
+    
+    // JWT for authentication
+    implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
+    
+    // JFreeChart for charts/graphs
+    implementation 'org.jfree:jfreechart:1.5.4'
+    
+    // FlatLaf for modern UI
+    implementation 'com.formdev:flatlaf:3.2.5'
+    
+    // Logging
+    implementation 'org.slf4j:slf4j-api:2.0.9'
+    implementation 'ch.qos.logback:logback-classic:1.4.11'
+    
+    // Apache Commons
+    implementation 'org.apache.commons:commons-lang3:3.13.0'
+    implementation 'commons-validator:commons-validator:1.7'
+    
+    // Testing
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.mockito:mockito-core:5.5.0'
+}
+
+application {
+    mainClass = 'Main'
+}
+
+jar {
+    manifest {
+        attributes(
+            'Main-Class': 'Main',
+            'Implementation-Title': 'Restaurant Management System',
+            'Implementation-Version': version
+        )
+    }
+    
+    // Create fat JAR with all dependencies
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+// Custom task to run the application
+task runApp(type: JavaExec) {
+    group = 'application'
+    description = 'Run the Restaurant Management System'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'Main'
+}
+
+// Task to create database
+task createDatabase(type: Exec) {
+    group = 'database'
+    description = 'Create database schema'
+    commandLine 'mysql', '-u', 'root', '-p', '<', 'database/schema.sql'
+}
+
+// Task to seed database
+task seedDatabase(type: Exec) {
+    group = 'database'
+    description = 'Seed database with sample data'
+    commandLine 'mysql', '-u', 'root', '-p', '<', 'database/seed.sql'
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+    options.compilerArgs << '-Xlint:unchecked'
+    options.deprecation = true
+}
+
+test {
+    useJUnit()
+    testLogging {
+        events "passed", "skipped", "failed"
+        exceptionFormat "full"
+    }
+}
